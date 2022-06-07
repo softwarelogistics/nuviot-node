@@ -1,0 +1,54 @@
+/// <reference path="../models/user.d.ts" />
+import { ActivatedRoute, Router } from '../core/utils';
+import { ReplaySubject, Observable } from 'rxjs';
+import { HttpClient } from '../core/utils';
+import { ErrorReporterService } from './error-reporter.service';
+import { NuviotClientService } from './nuviot-client.service';
+export declare class UserService {
+    private http;
+    private clientService;
+    private errorReporter;
+    private router;
+    private _activatedRoute;
+    paramOptions: any;
+    queryParams: any;
+    constructor(http: HttpClient, clientService: NuviotClientService, errorReporter: ErrorReporterService, router: Router, _activatedRoute: ActivatedRoute);
+    get isLoggedIn(): boolean;
+    set isLoggedIn(value: boolean);
+    private _users;
+    private _org;
+    protected _isLoggedIn$: ReplaySubject<boolean>;
+    protected _org$: ReplaySubject<Users.Org>;
+    protected _user$: ReplaySubject<Users.AppUser>;
+    protected _users$: ReplaySubject<Core.ListResponse<Users.AppUserSummary>>;
+    loadCurrentUser(): Promise<Users.AppUser>;
+    updateCoreInfo(coreUserInfo: Users.CoreUserInfo): Promise<void>;
+    hasParams(): boolean;
+    logout(): void;
+    getOrgsForCurrentUser(): Promise<Core.ListResponse<Users.OrgUser>>;
+    acceptTermsAndConditions(): Promise<Core.InvokeResultEx<Users.AppUser>>;
+    changeOrganization(orgId: string): Promise<boolean>;
+    loadUser(id: string): Promise<Core.FormResult<Users.AppUser, Users.AppUserView>>;
+    updateUser(user: Users.AppUser): Promise<Core.InvokeResult>;
+    loadUsers(filter: Core.ListFilter): Promise<Core.ListResponse<Users.AppUserSummary>>;
+    loadActiveUsers(filter: Core.ListFilter): Promise<Core.ListResponse<Users.AppUserSummary>>;
+    getDistributionLists(filter: Core.ListFilter): Promise<Core.ListResponse<Users.DistroListSummary>>;
+    login(email: string, password: string, rememberMe: boolean): Promise<Users.AppUser>;
+    validateDeviceUser(user: Devices.DeviceUser): Core.ErrorMessage[];
+    onLoggedIn(): Observable<boolean>;
+    onUsers(): Observable<Core.ListResponse<Users.AppUserSummary>>;
+    onUser(): Observable<Users.AppUser>;
+    onOrg(): Observable<Users.Org>;
+    getUsers(): Core.ListResponse<Users.AppUserSummary>;
+    getOrg(): Users.Org;
+    getUser(): Users.AppUser;
+    setUser(user: Users.AppUser): void;
+    addMediaResourceForUser(userId: string, mediaResourceEH: {
+        id: string;
+        text: string;
+        key: string;
+    }): void;
+    showWelcomeOnLogin(): Promise<void>;
+    hideWelcomeOnLogin(): Promise<void>;
+    setOrg(org: Users.Org): void;
+}
