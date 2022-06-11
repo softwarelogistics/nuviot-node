@@ -1,4 +1,6 @@
 import { Observable } from "rxjs";
+import fetch from 'node-fetch'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export class ActivatedRoute {
     snapshot: any;
@@ -11,7 +13,7 @@ export class Router {
 };
 
 export class HttpClient {
-    get<T>(url: string, options?: {
+    async get<T>(url: string, options?: {
         headers?: HttpHeaders | {
             [header: string]: string | string[];
         };
@@ -22,8 +24,11 @@ export class HttpClient {
         };
         reportProgress?: boolean;
         responseType?: 'json';
-        withCredentials?: boolean;}): Observable<T> {
-        return null;
+        withCredentials?: boolean;}): Promise<T> {
+       
+        var result = await fetch(url);
+        var json = await result.json();
+        return json as T;
     };
 
     put<T>(url: string, body: any | null, options?: {
@@ -42,11 +47,11 @@ export class HttpClient {
         return null;
     };
 
-    delete<T>(url: string):Observable<T> {
+    delete<T>(url: string):Promise<T> {
         return null;
     }
 
-    post<T>(url: string, body: any | null, options?: {
+    async post<T>(url: string, body: any | null, options?: {
         headers?: HttpHeaders | {
             [header: string]: string | string[];
         };
@@ -58,8 +63,31 @@ export class HttpClient {
         reportProgress?: boolean;
         responseType?: 'json';
         withCredentials?: boolean;
-    }): Observable<T> {
-        return null;
+    }): Promise<T> {
+      
+        var result = await fetch(url, {
+            method:'POST',
+            body: JSON.stringify(body),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log(result.status);
+
+        var json = await result.json();
+        return json as T;
+    }
+}
+
+
+export class NativeStorage {
+    public async getValue(key: string): Promise<string> {
+        return await AsyncStorage.getItem(key)
+    }
+
+    public async setValue(key: string, value: string) {
+        return await AsyncStorage.setItem(key,value);
     }
 }
 
@@ -81,8 +109,11 @@ export class HttpParams {
 
 export const environment = {
     production: false,
-    // siteUri: 'https://www.nuviot.com'
-    siteUri: 'https://localhost:5001'
+    appId: "1C114B00D8014BD988BF61D74672F9D2",
+    deviceId: 'mobileApp',
+    appInstanceid:"",
+    siteUri: 'https://api.nuviot.com'
+   // siteUri: 'https://localhost:5001'
     //siteUri: 'http://dev.nuviot.com'
 };
 

@@ -1,12 +1,13 @@
 /// <reference path="../models/user.ts" />
 
-import { environment } from '../core/utils';
+import { environment, NativeStorage } from '../core/utils';
 
 import { ActivatedRoute, Router } from '../core/utils';
 import { ReplaySubject, Observable } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '../core/utils';
 import { ErrorReporterService } from './error-reporter.service';
 import { NuviotClientService } from './nuviot-client.service';
+import { AuthRequest, AuthResponse } from '../models/AuthRequest';
 
 
 export class UserService {
@@ -20,6 +21,8 @@ export class UserService {
     private _activatedRoute: ActivatedRoute) {
 
     console.log('create user service instance');
+      if(this._activatedRoute.snapshot)
+      {
 
     this.queryParams = Object.keys(this._activatedRoute.snapshot.queryParams).length > 0 ? this._activatedRoute.snapshot.queryParams : {};
     const paramOptions = {};
@@ -40,6 +43,7 @@ export class UserService {
           paramOptions['queryParams'] = this.queryParams;
         }
       }
+    }
     }
   }
 
@@ -77,7 +81,7 @@ export class UserService {
 
   public logout() {
     this.http.get(`${environment.siteUri}/api/account/logout`)
-      .subscribe(result => {
+      .then(result => {
       });
     this.setUser(null);
     this.isLoggedIn = false;
@@ -166,6 +170,28 @@ export class UserService {
     return promise;
   }
 
+  public async auth(email: string, password: string): Promise<Core.InvokeResultEx<AuthResponse>> {
+    let request: AuthRequest = {
+      GrantType: 'password',  
+      AppInstanceId: environment.appInstanceid,
+      AppId: environment.appId, 
+      DeviceId:environment.deviceId,
+      ClientType:'mobileapp',
+      Email: email,
+      Password: password,
+      UserName: email  
+    }
+
+    let result = await this.clientService.post<AuthRequest, AuthResponse>('/api/v1/auth', request);
+    if(result.successful){
+      var storage = new NativeStorage();
+      await storage.setValue('access-token', result.result.accessToken);
+     
+    }
+
+    return result;
+  }
+
   public login(email: string, password: string, rememberMe: boolean): Promise<Users.AppUser> {
     const promise = new Promise<Users.AppUser>((resolve, reject) => {
       const body = new HttpParams()
@@ -185,7 +211,7 @@ export class UserService {
             .set('Content-Type', 'application/x-www-form-urlencoded')
             .set('dashboard', 'true')
         }
-      ).subscribe(data => {
+      ).then(data => {
         if (data.successful) {
           if (data.result && data.result !== '') {
             this.router.navigate([`/kiosk/${data.result}`]);

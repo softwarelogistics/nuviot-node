@@ -2,9 +2,7 @@
 import { environment } from '../core/utils';
 import { HttpClient, HttpHeaders } from '../core/utils';
 import { ErrorReporterService } from './error-reporter.service';
-import 'rxjs/add/operator/toPromise';
 import { NetworkCallStatusService } from './network-call-status-service';
-
 
 
 export class NuviotClientService {
@@ -13,7 +11,7 @@ export class NuviotClientService {
     private networkCallService: NetworkCallStatusService,
     private errorReporter: ErrorReporterService) { }
 
-  getListResponse<TData>(path: string, filter: Core.ListFilter = null): Promise<Core.ListResponse<TData>> {
+    getListResponse<TData>(path: string, filter: Core.ListFilter = null): Promise<Core.ListResponse<TData>> {
     if (path.startsWith('/')) {
       path = path.substring(1);
     }
@@ -50,7 +48,7 @@ export class NuviotClientService {
 
     const promise = new Promise<Core.ListResponse<TData>>((resolve, reject) => {
       this.http.get<Core.ListResponse<TData>>(`${environment.siteUri}/${path}`, { headers: headers })
-        .subscribe((response) => {
+        .then((response) => {
           this.networkCallService.endCall();
           if (response.successful) {
             resolve(response);
@@ -125,7 +123,7 @@ export class NuviotClientService {
 
     const promise = new Promise<Core.InvokeResultEx<TData>>((resolve, reject) => {
       this.http.get<Core.InvokeResultEx<TData>>(`${environment.siteUri}/${path}`)
-        .subscribe((response) => {
+        .then((response) => {
           this.networkCallService.endCall();
           if (response.successful) {
             resolve(response);
@@ -155,7 +153,7 @@ export class NuviotClientService {
     this.networkCallService.beginCall();
     const promise = new Promise<TData>((resolve, reject) => {
       this.http.get<TData>(`${environment.siteUri}/${path}`)
-        .subscribe((response) => {
+        .then((response) => {
           this.networkCallService.endCall();
           resolve(response);
         },
@@ -179,7 +177,6 @@ export class NuviotClientService {
     this.networkCallService.beginCall();
     const promise = new Promise<Core.InvokeResult>((resolve, reject) => {
       this.http.get<Core.InvokeResult>(`${environment.siteUri}/${path}`)
-        .toPromise()
         .then((response) => {
           this.networkCallService.endCall();
           if (!response.successful) {
@@ -209,7 +206,39 @@ export class NuviotClientService {
 
     const promise = new Promise<Core.FormResult<TModel, TView>>((resolve, reject) => {
       this.http.get<Core.FormResult<TModel, TView>>(`${environment.siteUri}/${path}`)
-        .subscribe((response) => {
+        .then((response) => {
+          this.networkCallService.endCall();
+          if (response.successful) {
+            resolve(response);
+          } else {
+            this.errorReporter.addErrors(response.errors);
+            if (reject) {
+              reject(response.errors[0].message);
+            }
+          }
+        },
+          (err) => {
+            this.networkCallService.endCall();
+            this.errorReporter.addMessage(err.message);
+            if (reject) {
+              reject(err.message);
+            }
+          });
+    });
+
+    return promise;
+  }
+
+  insert<TModel>(path: string, model: TModel): Promise<Core.InvokeResult> {
+    if (path.startsWith('/')) {
+      path = path.substring(1);
+    }
+
+    this.networkCallService.beginCall();
+
+    const promise = new Promise<Core.InvokeResult>((resolve, reject) => {
+      this.http.post<Core.InvokeResult>(`${environment.siteUri}/${path}`, model)
+        .then((response) => {
           this.networkCallService.endCall();
           if (response.successful) {
             resolve(response);
@@ -236,70 +265,15 @@ export class NuviotClientService {
     return this.postWithResponse(path, model);
   }
 
-  insert<TModel>(path: string, model: TModel): Promise<Core.InvokeResult> {
+  async postWithResponse<TModel, TResponse>(path: string, model: TModel): Promise<Core.InvokeResultEx<TResponse>> {
     if (path.startsWith('/')) {
       path = path.substring(1);
     }
 
     this.networkCallService.beginCall();
 
-    const promise = new Promise<Core.InvokeResult>((resolve, reject) => {
-      this.http.post<Core.InvokeResult>(`${environment.siteUri}/${path}`, model)
-        .subscribe((response) => {
-          this.networkCallService.endCall();
-          if (response.successful) {
-            resolve(response);
-          } else {
-            this.errorReporter.addErrors(response.errors);
-            if (reject) {
-              reject(response.errors[0].message);
-            }
-          }
-        },
-          (err) => {
-            this.networkCallService.endCall();
-            this.errorReporter.addMessage(err.message);
-            if (reject) {
-              reject(err.message);
-            }
-          });
-    });
-
-    return promise;
-  }
-
-
-  postWithResponse<TModel, TResponse>(path: string, model: TModel): Promise<Core.InvokeResultEx<TResponse>> {
-    if (path.startsWith('/')) {
-      path = path.substring(1);
-    }
-
-    this.networkCallService.beginCall();
-
-    const promise = new Promise<Core.InvokeResultEx<TResponse>>((resolve, reject) => {
-      this.http.post<Core.InvokeResultEx<TResponse>>(`${environment.siteUri}/${path}`, model)
-        .subscribe((response) => {
-          this.networkCallService.endCall();
-          if (response.successful) {
-            resolve(response);
-          } else {
-            this.errorReporter.addErrors(response.errors);
-            if (reject) {
-              reject(response.errors[0].message);
-            }
-          }
-        },
-          (err) => {
-            this.networkCallService.endCall();
-            this.errorReporter.addMessage(err.message);
-            if (reject) {
-              reject(err.message);
-            }
-          });
-    });
-
-    return promise;
-  }
+    return await this.http.post(`${environment.siteUri}/${path}`, model)
+; }
 
   postForListResponse<TModel, TResponse>(path: string, model: TModel): Promise<Core.ListResponse<TResponse>> {
     if (path.startsWith('/')) {
@@ -310,7 +284,7 @@ export class NuviotClientService {
 
     const promise = new Promise<Core.ListResponse<TResponse>>((resolve, reject) => {
       this.http.post<Core.ListResponse<TResponse>>(`${environment.siteUri}/${path}`, model)
-        .subscribe((response) => {
+        .then((response) => {
           this.networkCallService.endCall();
           if (response.successful) {
             resolve(response);
@@ -410,7 +384,7 @@ export class NuviotClientService {
 
     const promise = new Promise<Core.InvokeResult>((resolve, reject) => {
       this.http.delete<Core.InvokeResult>(`${environment.siteUri}/${path}`)
-        .subscribe((response) => {
+        .then((response) => {
           this.networkCallService.endCall();
 
           if (response.successful) {
@@ -442,7 +416,7 @@ export class NuviotClientService {
 
     const promise = new Promise<Core.InvokeResultEx<TResponse>>((resolve, reject) => {
       this.http.delete<Core.InvokeResultEx<TResponse>>(`${environment.siteUri}/${path}`)
-        .subscribe((response) => {
+        .then((response) => {
           this.networkCallService.endCall();
 
           if (response.successful) {

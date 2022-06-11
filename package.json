@@ -1,11 +1,11 @@
 {
-  "name": "nuviot-node",
-  "version": "1.0.0",
+  "name": "nuviot",
+  "version": "0.5.5",
   "description": "Source for NuvIoT NPM Library",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsc&&node .\\dist\\src\\examples\\web-client.js"
   },
   "repository": {
     "type": "git",
@@ -19,9 +19,13 @@
   },
   "homepage": "https://github.com/softwarelogistics/nuviot-node#readme",
   "devDependencies": {
+    "@types/node": "^17.0.41",
+    "@types/node-fetch": "^2.6.1",
     "typescript": "^4.7.3"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.17.6",
+    "node-fetch": "^2.6.1",
     "rxjs": "^7.5.5"
   }
 }
