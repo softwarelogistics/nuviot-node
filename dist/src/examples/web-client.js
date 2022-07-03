@@ -16,7 +16,7 @@ const nuviot_client_service_1 = require("../services/nuviot-client.service");
 const user_service_1 = require("../services/user.service");
 let http = new utils_1.HttpClient();
 let client = new nuviot_client_service_1.NuviotClientService(http, new network_call_status_service_1.NetworkCallStatusService(), new error_reporter_service_1.ErrorReporterService());
-let usr = new user_service_1.UserService(http, client, new error_reporter_service_1.ErrorReporterService(), new utils_1.Router(), new utils_1.ActivatedRoute());
+let usr = new user_service_1.UserService(http, client, new error_reporter_service_1.ErrorReporterService(), new utils_1.NativeStorageService(), new utils_1.Router(), new utils_1.ActivatedRoute());
 function login(email, password) {
     return __awaiter(this, void 0, void 0, function* () {
         let user = yield usr.auth(email, password);
@@ -25,4 +25,4 @@ function login(email, password) {
         console.log(user.result.user.id);
     });
 }
-console.log(login("kevinw@slsys.net", "Test1234"));
+console.log(login("[EMAIL]", "[PASSWORD]"));

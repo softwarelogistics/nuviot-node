@@ -66,7 +66,6 @@ export class BusinessService {
     return this.nuviotClient.delete(`/api/time/entry/${id}`);
   }
 
-
   public getExpensesForTask(start: string, end: string, taskId: string, userId: string):
     Promise<Core.ListResponse<Business.Expense>> {
     const filter = {
@@ -117,6 +116,26 @@ export class BusinessService {
 
   public getCustomers(): Promise<Core.ListResponse<Business.Customer>> {
     return this.nuviotClient.getListResponse<Business.Customer>('/api/customers');
+  }
+
+  public getPayrollForYear(year: number) : Promise<Business.Payroll[]> {
+    return this.nuviotClient.request<Business.Payroll[]>(`/api/payroll/year/${year}`);
+  }
+
+  public generatePayroll(timePeriodId: string) : Promise<Core.InvokeResultEx<Business.PayrollSummary>> {
+    return this.nuviotClient.request<Core.InvokeResultEx<Business.PayrollSummary>>(`/api/payroll/generate/${timePeriodId}`);
+  }
+
+  public getPaymentsForPeriod(timePeriodId: string) : Promise<Business.Payment[]> {
+    return this.nuviotClient.request<Business.Payment[]>(`/api/payroll/payments/${timePeriodId}`);
+  }
+
+  public updatePayment(update: Business.PaymentUpdate): Promise<Core.InvokeResultEx<Business.Payment>> {
+    return this.nuviotClient.updateWithResponse<Business.PaymentUpdate, Business.Payment>(`/api/payment/update`, update);
+  }
+
+  public generatePaymentsForPeriod(timePeriodId: string) : Promise<Core.InvokeResultEx<Business.PayrollSummary>> {
+    return this.nuviotClient.requestForInvokeResultEx<Business.PayrollSummary>(`/api/payroll/generate/${timePeriodId}`);
   }
 
   public saveCustomer(customer: Business.Customer): Promise<Core.InvokeResultEx<Business.Customer>> {

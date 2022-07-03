@@ -1,5 +1,6 @@
 "use strict";
 /// <reference path="../models/user.ts" />
+/// <reference path="../models/auth.ts" />
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,54 +14,62 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserService = void 0;
 const utils_1 = require("../core/utils");
 const rxjs_1 = require("rxjs");
-const utils_2 = require("../core/utils");
 class UserService {
-    constructor(http, clientService, errorReporter, router, _activatedRoute) {
+    constructor(http, clientService, errorReporter, nativeStorage, router, _activatedRoute) {
         this.http = http;
         this.clientService = clientService;
         this.errorReporter = errorReporter;
+        this.nativeStorage = nativeStorage;
         this.router = router;
         this._activatedRoute = _activatedRoute;
         this._isLoggedIn$ = new rxjs_1.ReplaySubject(0);
         this._org$ = new rxjs_1.ReplaySubject(null);
         this._user$ = new rxjs_1.ReplaySubject(null);
         this._users$ = new rxjs_1.ReplaySubject(null);
-        console.log('create user service instance');
-        if (this._activatedRoute.snapshot) {
-            this.queryParams = Object.keys(this._activatedRoute.snapshot.queryParams).length > 0 ? this._activatedRoute.snapshot.queryParams : {};
-            const paramOptions = {};
-            if (this.hasParams()) {
-                paramOptions['queryParamsHandling'] = 'preserve';
-            }
-            else {
-                if (window.location.href.search) {
-                    const vm = this;
-                    location.search.substr(1).replace('==', '`').split('&').forEach(function (item) {
-                        const parts = item.split('=');
-                        if (parts[0] !== '') {
-                            vm.queryParams[parts[0]] = parts[1].replace('`', '==');
-                        }
-                    });
-                    if (this.hasParams()) {
-                        paramOptions['queryParams'] = this.queryParams;
+        this.queryParams = Object.keys(this._activatedRoute.snapshot.queryParams).length > 0 ? this._activatedRoute.snapshot.queryParams : {};
+        const paramOptions = {};
+        if (this.hasParams()) {
+            paramOptions['queryParamsHandling'] = 'preserve';
+        }
+        else {
+            if (window.location.href.search) {
+                const vm = this;
+                location.search.substr(1).replace('==', '`').split('&').forEach(function (item) {
+                    const parts = item.split('=');
+                    if (parts[0] !== '') {
+                        vm.queryParams[parts[0]] = parts[1].replace('`', '==');
                     }
+                });
+                if (this.hasParams()) {
+                    paramOptions['queryParams'] = this.queryParams;
                 }
             }
         }
     }
-    get isLoggedIn() {
-        return window.localStorage.getItem("is_logged_in") == "login_true";
+    getIsLoggedIn() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return (yield (this.nativeStorage.getItemAsync("is_logged_in"))) == "login_true";
+        });
     }
-    set isLoggedIn(value) {
-        this._isLoggedIn$.next(value);
-        window.localStorage.setItem("is_logged_in", value ? "login_true" : "login_false");
+    setIsLoggedIn(value) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this._isLoggedIn$.next(value);
+            return yield this.nativeStorage.setItemAsync("is_logged_in", value ? "login_true" : "login_false");
+        });
     }
     loadCurrentUser() {
         return __awaiter(this, void 0, void 0, function* () {
             const response = yield this.clientService.request('/api/user');
-            this.setUser(response.model);
-            this.isLoggedIn = true;
+            yield this.setUser(response.model);
+            yield this.setIsLoggedIn(true);
             return response.model;
+        });
+    }
+    loadCurrentUserIfNecessary() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!(yield this.getUser()) && !(yield this.getIsLoggedIn())) {
+                return yield this.loadCurrentUser();
+            }
         });
     }
     updateCoreInfo(coreUserInfo) {
@@ -72,11 +81,11 @@ class UserService {
         return Object.keys(this.queryParams).length > 0;
     }
     logout() {
-        this.http.get(`${utils_1.environment.siteUri}/api/account/logout`)
-            .then(result => {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.http.get(`${utils_1.environment.siteUri}/api/account/logout`);
+            this.setUser(null);
+            return yield this.setIsLoggedIn(false);
         });
-        this.setUser(null);
-        this.isLoggedIn = false;
     }
     getOrgsForCurrentUser() {
         return this.clientService.getListResponse(`/api/user/orgs`);
@@ -162,49 +171,32 @@ class UserService {
             };
             let result = yield this.clientService.post('/api/v1/auth', request);
             if (result.successful) {
-                var storage = new utils_1.NativeStorage();
-                yield storage.setValue('access-token', result.result.accessToken);
+                yield this.nativeStorage.setItemAsync('access-token', result.result.accessToken);
             }
             return result;
         });
     }
     login(email, password, rememberMe) {
-        const promise = new Promise((resolve, reject) => {
-            const body = new utils_2.HttpParams()
-                .set('email', email)
-                .set('password', password)
-                .set('rememberme', rememberMe.toString());
-            let siteUrl = `${utils_1.environment.siteUri}/api/v1/login`;
-            if (email.indexOf('@') === -1) {
-                siteUrl += 'kiosk';
+        return __awaiter(this, void 0, void 0, function* () {
+            let body = {
+                email: email,
+                password: password,
+                rememberMe: rememberMe.toString()
+            };
+            try {
+                let result = yield this.clientService.post('/api/v1/login', body);
+                console.log('iniital login result->.', result);
+                if (result.successful) {
+                    return yield this.loadCurrentUser();
+                }
+                this.errorReporter.addErrors(result.errors);
+                throw result.errors[0].message;
             }
-            this.http.post(siteUrl, body.toString(), {
-                headers: new utils_2.HttpHeaders()
-                    .set('Content-Type', 'application/x-www-form-urlencoded')
-                    .set('dashboard', 'true')
-            }).then(data => {
-                if (data.successful) {
-                    if (data.result && data.result !== '') {
-                        this.router.navigate([`/kiosk/${data.result}`]);
-                    }
-                    else {
-                        this.loadCurrentUser()
-                            .then(usr => {
-                            resolve(usr);
-                        })
-                            .catch(err => reject(err));
-                    }
-                }
-                else {
-                    this.errorReporter.addErrors(data.errors);
-                    reject(data.errors[0].message);
-                }
-            }, err => {
+            catch (err) {
                 this.errorReporter.addErrors(err.statusText);
-                reject(err.statusText);
-            });
+                throw err.statusText;
+            }
         });
-        return promise;
     }
     validateDeviceUser(user) {
         const errs = [];
@@ -263,26 +255,37 @@ class UserService {
         return this._users;
     }
     getOrg() {
-        return this._org;
+        return __awaiter(this, void 0, void 0, function* () {
+            let org = yield this.nativeStorage.getItemAsync("app_user_org");
+            if (org) {
+                return JSON.parse(org);
+            }
+            return undefined;
+        });
     }
     getUser() {
-        let user = window.localStorage.getItem("app_user");
-        if (user) {
-            return JSON.parse(user);
-        }
-        return undefined;
+        return __awaiter(this, void 0, void 0, function* () {
+            let user = yield this.nativeStorage.getItemAsync("app_user");
+            if (user) {
+                return JSON.parse(user);
+            }
+            return undefined;
+        });
     }
     setUser(user) {
-        if (user) {
-            window.localStorage.setItem("app_user", JSON.stringify(user));
-            this._user$.next(user);
-            this.setOrg({ id: user.currentOrganization.id, name: user.currentOrganization.text });
-        }
-        else {
-            window.localStorage.removeItem("app_user");
-            this.setOrg(null);
-            this._user$.next(null);
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            if (user) {
+                yield this.nativeStorage.setItemAsync("app_user", JSON.stringify(user));
+                this._user$.next(user);
+                yield this.setOrg({ id: user.currentOrganization.id, name: user.currentOrganization.text });
+            }
+            else {
+                yield this.nativeStorage.removeItemAsync("app_user");
+                yield this.setOrg(null);
+                this._user$.next(null);
+            }
+            return true;
+        });
     }
     addMediaResourceForUser(userId, mediaResourceEH) {
         this.clientService.post(`/api/user/${userId}/mediaresource`, mediaResourceEH);
@@ -298,14 +301,17 @@ class UserService {
         });
     }
     setOrg(org) {
-        if (org) {
-            window.localStorage.setItem("app_user_org", JSON.stringify(org));
-            this._org$.next(org);
-        }
-        else {
-            this._org$.next(null);
-            window.localStorage.removeItem("app_user_org");
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            if (org) {
+                yield this.nativeStorage.setItemAsync("app_user_org", JSON.stringify(org));
+                this._org$.next(org);
+            }
+            else {
+                this._org$.next(null);
+                yield this.nativeStorage.removeItemAsync("app_user_org");
+            }
+            return true;
+        });
     }
 }
 exports.UserService = UserService;

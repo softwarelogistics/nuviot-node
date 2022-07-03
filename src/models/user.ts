@@ -113,6 +113,7 @@ namespace Users {
     name: string;
     key: string;
     description: string;
+    creationDate: string;
     notes: string;
     internalNotes?: string;
     candidate: Core.EntityHeader;
@@ -124,9 +125,10 @@ namespace Users {
   }
 
   export class JobApplicationHistory{
-      status: Core.EntityHeader;
-      statusUser: Core.EntityHeader;
-      statusDate: string;
+      id?: string;
+      status?: Core.EntityHeader;
+      user?: Core.EntityHeader;
+      dateStamp?: string;
       notes: string;
    }
 
@@ -141,7 +143,7 @@ namespace Users {
     jobId: string;
     status: string;
     statusKey: string;
-    statusDat: string;
+    statusDate: string;
   }
 
   export class ExternalLogin {

@@ -35,6 +35,10 @@ export class ProjectManagementService {
     return this.nuviotClient.update('/api/project', project);
   }
 
+  public newProjectTeamMember(): Promise<Core.FormResult<Planner.TeamMember, Planner.TeamMemberView>> {
+    return this.nuviotClient.request<Core.FormResult<Planner.TeamMember, Planner.TeamMemberView>>(`/api/pm/teammember/factory`);
+  }
+
   public deleteProject(id: string): Promise<Core.InvokeResult> {
     return this.nuviotClient.delete(`/api/project/${id}`);
   }
@@ -44,11 +48,7 @@ export class ProjectManagementService {
   }
 
   public newSprint(projectid: string): Promise<Core.FormResult<Planner.Sprint, Planner.SprintView>> {
-    return this.nuviotClient.request<Core.FormResult<Planner.Sprint, Planner.SprintView>>(`/api/project/${projectid}/sprints`);
-  }
-
-  public newProjectTeamMember(): Promise<Core.FormResult<Planner.TeamMember, Planner.TeamMemberView>> {
-    return this.nuviotClient.request<Core.FormResult<Planner.TeamMember, Planner.TeamMemberView>>(`/api/pm/teammember/factory`);
+    return this.nuviotClient.request<Core.FormResult<Planner.Sprint, Planner.SprintView>>(`/api/project/${projectid}/sprint/factory`);
   }
 
   public getSprint(sprintid: string): Promise<Core.FormResult<Planner.Sprint, Planner.SprintView>> {
@@ -116,12 +116,16 @@ export class ProjectManagementService {
     }
   }
 
-  public getTaskForSprint(id: string, sprintid: string, status: string): Promise<Core.ListResponse<Planner.WorkTaskSummary>> {
+  public getTasksForSprint(id: string, sprintid: string, status: string): Promise<Core.ListResponse<Planner.WorkTaskSummary>> {
     if (status === 'all') {
       return this.nuviotClient.request<Core.ListResponse<Planner.WorkTaskSummary>>(`/api/pm/tasks/sprint/${sprintid}`);
     } else {
       return this.nuviotClient.request<Core.ListResponse<Planner.WorkTaskSummary>>(`/api/pm/tasks/sprint/${sprintid}/${status}`);
     }
+  }
+
+  public getTasksForProjectForCurrentSprint(projectid: string): Promise<Core.ListResponse<Planner.WorkTaskSummary>> {
+      return this.nuviotClient.request<Core.ListResponse<Planner.WorkTaskSummary>>(`/api/pm/tasks/project/${projectid}/sprint/current`);
   }
 
   public newTask(projectid: string = null): Promise<Core.FormResult<Planner.WorkTask, Planner.WorkTaskView>> {
@@ -180,8 +184,8 @@ export class ProjectManagementService {
     return this.nuviotClient.request<Core.FormResult<Planner.WorkTask, Planner.WorkTaskView>>(`/api/pm/task/${taskId}`);
   }
 
-  public updateTask(task: Planner.WorkTask): Promise<Core.InvokeResult> {
-    return this.nuviotClient.update('/api/pm/task', task);
+  public updateTask(task: Planner.WorkTask): Promise<Core.InvokeResultEx<Planner.WorkTask>> {
+    return this.nuviotClient.updateWithResponse('/api/pm/task', task);
   }
 
   public updateTaskFromExternalItem(task: Planner.WorkTaskUpdateFromExternalItem): Promise<Core.InvokeResultEx<Planner.WorkTask>> {
@@ -668,6 +672,8 @@ export class ProjectManagementService {
       status: task.status.text,
       statusKey: task.status.key,
       statusId: task.status.key,
+      sprint: '',
+      sprintId: '',
       module: '',
       moduleId: '',
       externalStatus: '',
@@ -681,6 +687,8 @@ export class ProjectManagementService {
       primaryContributorId: '',
       qaResource: '',
       qaResourceId: '',
+      hoursUsed: task.hoursUsed,
+      hoursEstimate: task.hoursEstimate,
       lastUpdatedDate: task.lastUpdatedDate,
       complexity: task.complexity.text,
       scopeOfEffort: task.scopeOfEffort.text,
@@ -688,7 +696,14 @@ export class ProjectManagementService {
       externalTaskCode: task.externalTaskCode,
       externalTaskLink: task.externalTaskLink,
       labels: task.labels,
+      isActive: true,
+      rankedOrder: task.rankedOrder,
     };
+
+    if(task.sprint){
+      wts.sprintId = task.sprint.id;
+      wts.sprint = task.sprint.text;
+    }
 
     if (task.externalStatus) {
       wts.externalStatus = task.externalStatus.text;

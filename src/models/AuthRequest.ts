@@ -1,3 +1,5 @@
+/// <reference path="./core/core.ts" />
+
 export class AuthRequest {
     GrantType = 'password';
     AppId = 'dashboard';
@@ -13,13 +15,13 @@ export class AuthRequest {
 }
 
 export interface AuthResponse {
-    accessToken: string;
-    accessTokenExpiresUTC: string;
-    refreshToken: string;
-    refreshTokenExpiresUTC: string;
-    appInstanceId: string;
-    isLockedOut: boolean;
-    user: Core.EntityHeader;
-    org: Core.EntityHeader;
-    roles: Core.EntityHeader[];
+  accessToken: string;
+  accessTokenExpiresUTC: string;
+  refreshToken: string;
+  refreshTokenExpiresUTC: string;
+  appInstanceId: string;
+  isLockedOut: boolean;
+  user: Core.EntityHeader;
+  org: Core.EntityHeader;
+  roles: Core.EntityHeader[];
 }

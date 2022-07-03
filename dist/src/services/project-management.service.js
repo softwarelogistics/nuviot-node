@@ -35,6 +35,9 @@ class ProjectManagementService {
     updateProject(project) {
         return this.nuviotClient.update('/api/project', project);
     }
+    newProjectTeamMember() {
+        return this.nuviotClient.request(`/api/pm/teammember/factory`);
+    }
     deleteProject(id) {
         return this.nuviotClient.delete(`/api/project/${id}`);
     }
@@ -42,10 +45,7 @@ class ProjectManagementService {
         return this.nuviotClient.request(`/api/project/${projectid}/sprints`);
     }
     newSprint(projectid) {
-        return this.nuviotClient.request(`/api/project/${projectid}/sprints`);
-    }
-    newProjectTeamMember() {
-        return this.nuviotClient.request(`/api/pm/teammember/factory`);
+        return this.nuviotClient.request(`/api/project/${projectid}/sprint/factory`);
     }
     getSprint(sprintid) {
         return this.nuviotClient.request(`/api/project/sprint/${sprintid}`);
@@ -99,13 +99,16 @@ class ProjectManagementService {
             return this.nuviotClient.request(`/api/pm/tasks/assignedto/${userId}/${status}`);
         }
     }
-    getTaskForSprint(id, sprintid, status) {
+    getTasksForSprint(id, sprintid, status) {
         if (status === 'all') {
             return this.nuviotClient.request(`/api/pm/tasks/sprint/${sprintid}`);
         }
         else {
             return this.nuviotClient.request(`/api/pm/tasks/sprint/${sprintid}/${status}`);
         }
+    }
+    getTasksForProjectForCurrentSprint(projectid) {
+        return this.nuviotClient.request(`/api/pm/tasks/project/${projectid}/sprint/current`);
     }
     newTask(projectid = null) {
         if (projectid) {
@@ -152,7 +155,7 @@ class ProjectManagementService {
         return this.nuviotClient.request(`/api/pm/task/${taskId}`);
     }
     updateTask(task) {
-        return this.nuviotClient.update('/api/pm/task', task);
+        return this.nuviotClient.updateWithResponse('/api/pm/task', task);
     }
     updateTaskFromExternalItem(task) {
         return this.nuviotClient.updateWithResponse('/api/pm/task/externalupdate', task);
@@ -487,6 +490,8 @@ class ProjectManagementService {
             status: task.status.text,
             statusKey: task.status.key,
             statusId: task.status.key,
+            sprint: '',
+            sprintId: '',
             module: '',
             moduleId: '',
             externalStatus: '',
@@ -500,6 +505,8 @@ class ProjectManagementService {
             primaryContributorId: '',
             qaResource: '',
             qaResourceId: '',
+            hoursUsed: task.hoursUsed,
+            hoursEstimate: task.hoursEstimate,
             lastUpdatedDate: task.lastUpdatedDate,
             complexity: task.complexity.text,
             scopeOfEffort: task.scopeOfEffort.text,
@@ -507,7 +514,13 @@ class ProjectManagementService {
             externalTaskCode: task.externalTaskCode,
             externalTaskLink: task.externalTaskLink,
             labels: task.labels,
+            isActive: true,
+            rankedOrder: task.rankedOrder,
         };
+        if (task.sprint) {
+            wts.sprintId = task.sprint.id;
+            wts.sprint = task.sprint.text;
+        }
         if (task.externalStatus) {
             wts.externalStatus = task.externalStatus.text;
             wts.externalStatusId = task.externalStatus.id;

@@ -18,6 +18,11 @@ export declare class BusinessService {
     getAllTimePeriods(): Promise<Core.ListResponse<Business.TimePeriod>>;
     createTimePeriods(year: Number): Promise<Core.ListResponse<Business.TimePeriod>>;
     getCustomers(): Promise<Core.ListResponse<Business.Customer>>;
+    getPayrollForYear(year: number): Promise<Business.Payroll[]>;
+    generatePayroll(timePeriodId: string): Promise<Core.InvokeResultEx<Business.PayrollSummary>>;
+    getPaymentsForPeriod(timePeriodId: string): Promise<Business.Payment[]>;
+    updatePayment(update: Business.PaymentUpdate): Promise<Core.InvokeResultEx<Business.Payment>>;
+    generatePaymentsForPeriod(timePeriodId: string): Promise<Core.InvokeResultEx<Business.PayrollSummary>>;
     saveCustomer(customer: Business.Customer): Promise<Core.InvokeResultEx<Business.Customer>>;
     getCustomer(customerId: string): Promise<Core.InvokeResultEx<Business.Customer>>;
     deleteCustomer(customerId: string): Promise<Core.InvokeResult>;

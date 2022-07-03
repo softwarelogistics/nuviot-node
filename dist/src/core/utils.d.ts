@@ -44,9 +44,10 @@ export declare class HttpClient {
         withCredentials?: boolean;
     }): Promise<T>;
 }
-export declare class NativeStorage {
-    getValue(key: string): Promise<string>;
-    setValue(key: string, value: string): Promise<void>;
+export declare class NativeStorageService {
+    getItemAsync(key: string): Promise<string>;
+    setItemAsync(key: string, value: string): Promise<boolean>;
+    removeItemAsync(key: string): Promise<boolean>;
 }
 export declare class HttpHeaders {
     set(key: string, value: string): HttpHeaders;

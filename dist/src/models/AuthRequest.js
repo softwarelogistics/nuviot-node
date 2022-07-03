@@ -1,4 +1,5 @@
 "use strict";
+/// <reference path="./core/core.ts" />
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthRequest = void 0;
 class AuthRequest {

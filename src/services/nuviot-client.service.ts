@@ -11,7 +11,7 @@ export class NuviotClientService {
     private networkCallService: NetworkCallStatusService,
     private errorReporter: ErrorReporterService) { }
 
-    getListResponse<TData>(path: string, filter: Core.ListFilter = null): Promise<Core.ListResponse<TData>> {
+  getListResponse<TData>(path: string, filter: Core.ListFilter = null): Promise<Core.ListResponse<TData>> {
     if (path.startsWith('/')) {
       path = path.substring(1);
     }
@@ -272,8 +272,8 @@ export class NuviotClientService {
 
     this.networkCallService.beginCall();
 
-    return await this.http.post(`${environment.siteUri}/${path}`, model)
-; }
+    return await this.http.post(`${environment.siteUri}/${path}`, model);
+  }
 
   postForListResponse<TModel, TResponse>(path: string, model: TModel): Promise<Core.ListResponse<TResponse>> {
     if (path.startsWith('/')) {
@@ -438,5 +438,4 @@ export class NuviotClientService {
 
     return promise;
   }
-
 }

@@ -9,10 +9,10 @@ export declare class ProjectManagementService {
     loadProject(id: string): Promise<Core.FormResult<Planner.Project, Planner.ProjectView>>;
     insertProject(project: Planner.Project): Promise<Core.InvokeResult>;
     updateProject(project: Planner.Project): Promise<Core.InvokeResult>;
+    newProjectTeamMember(): Promise<Core.FormResult<Planner.TeamMember, Planner.TeamMemberView>>;
     deleteProject(id: string): Promise<Core.InvokeResult>;
     getSprints(projectid: string): Promise<Core.ListResponse<Planner.Sprint>>;
     newSprint(projectid: string): Promise<Core.FormResult<Planner.Sprint, Planner.SprintView>>;
-    newProjectTeamMember(): Promise<Core.FormResult<Planner.TeamMember, Planner.TeamMemberView>>;
     getSprint(sprintid: string): Promise<Core.FormResult<Planner.Sprint, Planner.SprintView>>;
     insertSprint(sprint: Planner.Sprint): Promise<Core.InvokeResult>;
     updateSprint(sprint: Planner.Sprint): Promise<Core.InvokeResult>;
@@ -27,7 +27,8 @@ export declare class ProjectManagementService {
     updateTaskStatus(taskId: string, status: string): Promise<Core.InvokeResultEx<Planner.WorkTask>>;
     updateTaskStatusAndAssignedTo(taskId: string, update: Planner.WorkTaskAssignmentStatusUpdate): Promise<Core.InvokeResultEx<Planner.WorkTask>>;
     getTasksAssignedToUser(userId: string, status: string): Promise<Core.ListResponse<Planner.WorkTaskSummary>>;
-    getTaskForSprint(id: string, sprintid: string, status: string): Promise<Core.ListResponse<Planner.WorkTaskSummary>>;
+    getTasksForSprint(id: string, sprintid: string, status: string): Promise<Core.ListResponse<Planner.WorkTaskSummary>>;
+    getTasksForProjectForCurrentSprint(projectid: string): Promise<Core.ListResponse<Planner.WorkTaskSummary>>;
     newTask(projectid?: string): Promise<Core.FormResult<Planner.WorkTask, Planner.WorkTaskView>>;
     createTask(newTaskRequest: Planner.NewTask): Promise<Core.InvokeResultEx<Planner.WorkTaskSummary>>;
     workTaskToSummary(workTask: Planner.WorkTask): Planner.WorkTaskSummary;
@@ -41,7 +42,7 @@ export declare class ProjectManagementService {
     newTaskForSprint(projectid: string, sprintid: string): Promise<Core.FormResult<Planner.WorkTask, Planner.WorkTaskView>>;
     insertTask(task: Planner.WorkTask): Promise<Core.InvokeResult>;
     getTask(taskId: string): Promise<Core.FormResult<Planner.WorkTask, Planner.WorkTaskView>>;
-    updateTask(task: Planner.WorkTask): Promise<Core.InvokeResult>;
+    updateTask(task: Planner.WorkTask): Promise<Core.InvokeResultEx<Planner.WorkTask>>;
     updateTaskFromExternalItem(task: Planner.WorkTaskUpdateFromExternalItem): Promise<Core.InvokeResultEx<Planner.WorkTask>>;
     updateTaskDetail(task: Planner.WorkTask): Promise<Core.InvokeResult>;
     updateTaskForKnownActivity(task: Planner.WorkTask, activityType: string, activityId: string): Promise<Core.InvokeResult>;

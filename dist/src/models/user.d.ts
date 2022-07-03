@@ -86,6 +86,7 @@ declare namespace Users {
         name: string;
         key: string;
         description: string;
+        creationDate: string;
         notes: string;
         internalNotes?: string;
         candidate: Core.EntityHeader;
@@ -96,9 +97,10 @@ declare namespace Users {
         history: JobApplicationHistory[];
     }
     class JobApplicationHistory {
-        status: Core.EntityHeader;
-        statusUser: Core.EntityHeader;
-        statusDate: string;
+        id?: string;
+        status?: Core.EntityHeader;
+        user?: Core.EntityHeader;
+        dateStamp?: string;
         notes: string;
     }
     class JobApplicationSummary {
@@ -112,7 +114,7 @@ declare namespace Users {
         jobId: string;
         status: string;
         statusKey: string;
-        statusDat: string;
+        statusDate: string;
     }
     class ExternalLogin {
         id: string;

@@ -1,13 +1,14 @@
 /// <reference path="../models/user.ts" />
+/// <reference path="../models/auth.ts" />
 
-import { environment, NativeStorage } from '../core/utils';
+import { environment } from '../core/utils';
 
 import { ActivatedRoute, Router } from '../core/utils';
 import { ReplaySubject, Observable } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '../core/utils';
 import { ErrorReporterService } from './error-reporter.service';
 import { NuviotClientService } from './nuviot-client.service';
-import { AuthRequest, AuthResponse } from '../models/AuthRequest';
+import { NativeStorageService } from '../core/utils';
 
 
 export class UserService {
@@ -17,12 +18,10 @@ export class UserService {
   constructor(private http: HttpClient,
     private clientService: NuviotClientService,
     private errorReporter: ErrorReporterService,
+    private nativeStorage: NativeStorageService,
     private router: Router,
     private _activatedRoute: ActivatedRoute) {
 
-    console.log('create user service instance');
-      if(this._activatedRoute.snapshot)
-      {
 
     this.queryParams = Object.keys(this._activatedRoute.snapshot.queryParams).length > 0 ? this._activatedRoute.snapshot.queryParams : {};
     const paramOptions = {};
@@ -44,16 +43,15 @@ export class UserService {
         }
       }
     }
-    }
   }
 
-  get isLoggedIn(): boolean {
-    return window.localStorage.getItem("is_logged_in") == "login_true";
+  async getIsLoggedIn(): Promise<boolean> {
+    return await (this.nativeStorage.getItemAsync("is_logged_in")) == "login_true";
   }
 
-  set isLoggedIn(value: boolean) {
+  async setIsLoggedIn(value: boolean): Promise<boolean> {
     this._isLoggedIn$.next(value);
-    window.localStorage.setItem("is_logged_in", value ? "login_true" : "login_false");
+    return await this.nativeStorage.setItemAsync("is_logged_in", value ? "login_true" : "login_false");
   }
 
   private _users: Core.ListResponse<Users.AppUserSummary>;
@@ -65,13 +63,19 @@ export class UserService {
   protected _users$ = new ReplaySubject<Core.ListResponse<Users.AppUserSummary>>(null);
 
   async loadCurrentUser(): Promise<Users.AppUser> {
-      const response = await this.clientService.request<Core.FormResult<Users.AppUser, Users.AppUserView>>('/api/user');
-      this.setUser(response.model);
-      this.isLoggedIn = true;
-      return response.model;
+    const response = await this.clientService.request<Core.FormResult<Users.AppUser, Users.AppUserView>>('/api/user');
+    await this.setUser(response.model);
+    await this.setIsLoggedIn(true);
+    return response.model;
   }
 
-  async updateCoreInfo(coreUserInfo: Users.CoreUserInfo){
+  async loadCurrentUserIfNecessary(): Promise<Users.AppUser> {
+    if (!await this.getUser() && !await this.getIsLoggedIn()) {
+      return await this.loadCurrentUser();
+    }
+  }
+
+  async updateCoreInfo(coreUserInfo: Users.CoreUserInfo) {
     await this.clientService.update('/api/user/coreinfo', coreUserInfo);
   }
 
@@ -79,12 +83,10 @@ export class UserService {
     return Object.keys(this.queryParams).length > 0;
   }
 
-  public logout() {
-    this.http.get(`${environment.siteUri}/api/account/logout`)
-      .then(result => {
-      });
+  public async logout(): Promise<boolean> {
+    await this.http.get(`${environment.siteUri}/api/account/logout`);
     this.setUser(null);
-    this.isLoggedIn = false;
+    return await this.setIsLoggedIn(false);
   }
 
   public getOrgsForCurrentUser(): Promise<Core.ListResponse<Users.OrgUser>> {
@@ -93,7 +95,7 @@ export class UserService {
 
   public async acceptTermsAndConditions(): Promise<Core.InvokeResultEx<Users.AppUser>> {
     let result = await this.clientService.request<Core.InvokeResultEx<Users.AppUser>>('/api/user/accepttc')
-    if(result.successful){
+    if (result.successful) {
       this.setUser(result.result);
     }
 
@@ -170,69 +172,49 @@ export class UserService {
     return promise;
   }
 
-  public async auth(email: string, password: string): Promise<Core.InvokeResultEx<AuthResponse>> {
-    let request: AuthRequest = {
-      GrantType: 'password',  
+
+  public async auth(email: string, password: string): Promise<Core.InvokeResultEx<Auth.Response>> {
+    let request: Auth.Request = {
+      GrantType: 'password',
       AppInstanceId: environment.appInstanceid,
-      AppId: environment.appId, 
-      DeviceId:environment.deviceId,
-      ClientType:'mobileapp',
+      AppId: environment.appId,
+      DeviceId: environment.deviceId,
+      ClientType: 'mobileapp',
       Email: email,
       Password: password,
-      UserName: email  
+      UserName: email
     }
 
-    let result = await this.clientService.post<AuthRequest, AuthResponse>('/api/v1/auth', request);
-    if(result.successful){
-      var storage = new NativeStorage();
-      await storage.setValue('access-token', result.result.accessToken);
-     
+    let result = await this.clientService.post<Auth.Request, Auth.Response>('/api/v1/auth', request);
+    if (result.successful) {
+      await this.nativeStorage.setItemAsync('access-token', result.result.accessToken);
+
     }
 
     return result;
   }
 
-  public login(email: string, password: string, rememberMe: boolean): Promise<Users.AppUser> {
-    const promise = new Promise<Users.AppUser>((resolve, reject) => {
-      const body = new HttpParams()
-        .set('email', email)
-        .set('password', password)
-        .set('rememberme', rememberMe.toString());
+  public async login(email: string, password: string, rememberMe: boolean): Promise<Users.AppUser> {
 
-      let siteUrl = `${environment.siteUri}/api/v1/login`;
-      if (email.indexOf('@') === -1) {
-        siteUrl += 'kiosk';
+    let body = {
+      email: email,
+      password: password,
+      rememberMe: rememberMe.toString()
+    }
+
+    try {
+      let result = await this.clientService.post<any,Core.InvokeResultEx<string>>('/api/v1/login', body)
+      console.log('iniital login result->.', result);
+      if (result.successful) {
+          return await this.loadCurrentUser();
       }
-
-      this.http.post<Core.InvokeResultEx<string>>(siteUrl,
-        body.toString(),
-        {
-          headers: new HttpHeaders()
-            .set('Content-Type', 'application/x-www-form-urlencoded')
-            .set('dashboard', 'true')
-        }
-      ).then(data => {
-        if (data.successful) {
-          if (data.result && data.result !== '') {
-            this.router.navigate([`/kiosk/${data.result}`]);
-          } else {
-            this.loadCurrentUser()
-              .then(usr => {
-                resolve(usr);
-              })
-              .catch(err => reject(err));
-          }
-        } else {
-          this.errorReporter.addErrors(data.errors);
-          reject(data.errors[0].message);
-        }
-      }, err => {
-        this.errorReporter.addErrors(err.statusText);
-        reject(err.statusText);
-      });
-    });
-
-    return promise;
+        this.errorReporter.addErrors(result.errors);
+        throw result.errors[0].message;
+    }
+    catch (err) {
+      this.errorReporter.addErrors(err.statusText);
+      throw err.statusText;
+    }
   }
 
   validateDeviceUser(user: Devices.DeviceUser): Core.ErrorMessage[] {
@@ -304,12 +286,17 @@ export class UserService {
     return this._users;
   }
 
-  getOrg(): Users.Org {
-    return this._org;
+  async getOrg(): Promise<Users.Org> {
+    let org = await this.nativeStorage.getItemAsync("app_user_org");
+    if (org) {
+      return JSON.parse(org);
+    }
+
+    return undefined;
   }
 
-  getUser(): Users.AppUser {
-    let user = window.localStorage.getItem("app_user");
+  async getUser(): Promise<Users.AppUser> {
+    let user = await this.nativeStorage.getItemAsync("app_user");
     if (user) {
       return JSON.parse(user);
     }
@@ -317,16 +304,18 @@ export class UserService {
     return undefined;
   }
 
-  setUser(user: Users.AppUser) {
+  async setUser(user: Users.AppUser): Promise<boolean> {
     if (user) {
-      window.localStorage.setItem("app_user", JSON.stringify(user));
+      await this.nativeStorage.setItemAsync("app_user", JSON.stringify(user));
       this._user$.next(user);
-      this.setOrg({ id: user.currentOrganization.id, name: user.currentOrganization.text });
+      await this.setOrg({ id: user.currentOrganization.id, name: user.currentOrganization.text });
     } else {
-      window.localStorage.removeItem("app_user");
-      this.setOrg(null);
+      await this.nativeStorage.removeItemAsync("app_user");
+      await this.setOrg(null);
       this._user$.next(null);
     }
+
+    return true;
   }
 
   addMediaResourceForUser(userId: string, mediaResourceEH: { id: string; text: string; key: string; }) {
@@ -341,14 +330,15 @@ export class UserService {
     this.clientService.request('/api/users/welcome/show/false');
   }
 
-  setOrg(org: Users.Org) {
+  async setOrg(org: Users.Org): Promise<boolean> {
     if (org) {
-      window.localStorage.setItem("app_user_org", JSON.stringify(org));
+      await this.nativeStorage.setItemAsync("app_user_org", JSON.stringify(org));
       this._org$.next(org);
     } else {
       this._org$.next(null);
-      window.localStorage.removeItem("app_user_org");
+      await this.nativeStorage.removeItemAsync("app_user_org");
     }
-  }
 
+    return true;
+  }
 }

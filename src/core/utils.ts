@@ -81,13 +81,18 @@ export class HttpClient {
 }
 
 
-export class NativeStorage {
-    public async getValue(key: string): Promise<string> {
+export class NativeStorageService {
+    public async getItemAsync(key: string): Promise<string> {
         return await AsyncStorage.getItem(key)
     }
 
-    public async setValue(key: string, value: string) {
-        return await AsyncStorage.setItem(key,value);
+    public async setItemAsync(key: string, value: string): Promise<boolean> {
+        await AsyncStorage.setItem(key,value);
+        return true;
+    }
+
+    public async removeItemAsync(key: string): Promise<boolean> {
+        return true;
     }
 }
 

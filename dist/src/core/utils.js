@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CookieService = exports.environment = exports.HttpParams = exports.HttpHeaders = exports.NativeStorage = exports.HttpClient = exports.Router = exports.ActivatedRoute = void 0;
+exports.CookieService = exports.environment = exports.HttpParams = exports.HttpHeaders = exports.NativeStorageService = exports.HttpClient = exports.Router = exports.ActivatedRoute = void 0;
 const node_fetch_1 = require("node-fetch");
 const async_storage_1 = require("@react-native-async-storage/async-storage");
 class ActivatedRoute {
@@ -54,19 +54,25 @@ class HttpClient {
     }
 }
 exports.HttpClient = HttpClient;
-class NativeStorage {
-    getValue(key) {
+class NativeStorageService {
+    getItemAsync(key) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield async_storage_1.default.getItem(key);
         });
     }
-    setValue(key, value) {
+    setItemAsync(key, value) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield async_storage_1.default.setItem(key, value);
+            yield async_storage_1.default.setItem(key, value);
+            return true;
+        });
+    }
+    removeItemAsync(key) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return true;
         });
     }
 }
-exports.NativeStorage = NativeStorage;
+exports.NativeStorageService = NativeStorageService;
 class HttpHeaders {
     set(key, value) {
         return this;

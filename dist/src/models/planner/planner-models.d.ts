@@ -146,6 +146,7 @@ declare namespace Planner {
         defaultPrimaryContributor: Core.EntityHeader;
         externalTaskStatusConfiguration: Core.EntityHeader;
         description: string;
+        currentSprint: Core.EntityHeader;
         isActive: boolean;
         status: string;
         timeZone: Core.EntityHeader;
@@ -155,6 +156,7 @@ declare namespace Planner {
         hoursUsed: number;
         currentTaskIndex: number;
         why: string;
+        sprints: Core.PickerOption[];
         notes: Note[];
         requireExternalTaskCode: boolean;
         helpResources: Planner.HelpResource[];
@@ -174,6 +176,7 @@ declare namespace Planner {
         status: Core.FormField;
         isActive: Core.FormField;
         customer: Core.FormField;
+        currentSprint: Core.FormField;
         agreement: Core.FormField;
         timeZone: Core.FormField;
         projectCode: Core.FormField;
@@ -256,6 +259,7 @@ declare namespace Planner {
     }
     interface Sprint {
         id: string;
+        key: string;
         name: string;
         description: string;
         status: Core.EntityHeader;
@@ -267,6 +271,7 @@ declare namespace Planner {
     }
     interface SprintView {
         name: Core.FormField;
+        key: Core.FormField;
         description: Core.FormField;
         status: Core.FormField;
         project: Core.FormField;
@@ -382,6 +387,7 @@ declare namespace Planner {
         organizationName: string;
         isBlocked: boolean;
         isFlagged: boolean;
+        isActive: boolean;
         hasOpenIssues: boolean;
         taskCode: string;
         status: string;
@@ -398,12 +404,17 @@ declare namespace Planner {
         assignedToUserId: string;
         primaryContributor: string;
         primaryContributorId: string;
+        sprint: string;
+        sprintId: string;
         qaResource: string;
         qaResourceId: string;
         lastUpdatedDate: string;
+        hoursUsed: number;
+        hoursEstimate: number;
         complexity: string;
         scopeOfEffort: string;
         points: number;
+        rankedOrder: number;
         externalTaskCode: string;
         externalTaskLink: string;
         labels: Core.Label[];
@@ -425,6 +436,9 @@ declare namespace Planner {
         assignedByUser: Core.EntityHeader;
         ownerOrganization: Core.EntityHeader;
         project: Core.EntityHeader;
+        sprint: Core.EntityHeader;
+        sprints: Core.PickerOption[];
+        rankedOrder: number;
         isBlocked: boolean;
         instructions: string;
         additionalInformation: string;
@@ -516,6 +530,8 @@ declare namespace Planner {
         assignedByUser: Core.FormField;
         isBlocked: Core.FormField;
         isBlockedReason: Core.FormField;
+        rankedOrder: Core.FormField;
+        sprint: Core.FormField;
         status: Core.FormField;
         externalStatus: Core.FormField;
         priority: Core.FormField;
@@ -876,6 +892,7 @@ declare namespace Planner {
         isArchived: Core.FormField;
         isClosedStatus: Core.FormField;
         notifyTaskLeadOnSet: Core.FormField;
+        notifyTaskAdminOnSet: Core.FormField;
         notifyPrimaryContributorOnSet: Core.FormField;
         notifyQAResourceOnSet: Core.FormField;
     }
@@ -898,6 +915,7 @@ declare namespace Planner {
         isArchived: boolean;
         notifyTaskLeadOnSet: boolean;
         notifyPrimaryContributorOnSet: boolean;
+        notifyTaskAdminOnSet: boolean;
         notifyQAResourceOnSet: boolean;
         validTransitions: StatusTransition[];
     }

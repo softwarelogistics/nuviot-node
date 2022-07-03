@@ -16,7 +16,7 @@ class HrService {
     }
     addJobApplication(application) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.nuviotClient.post('/api/job/application', application);
+            return yield this.nuviotClient.postWithResponse('/api/job/application', application);
         });
     }
     updateJobApplication(application) {
@@ -59,9 +59,19 @@ class HrService {
             return yield this.nuviotClient.request(`/api/job/applications/${jobId}`);
         });
     }
+    getAllJobApplications() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.nuviotClient.request(`/api/job/applications`);
+        });
+    }
     getApplicationForUserByKey(key) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.nuviotClient.request(`/api/job/application/my/${key}`);
+        });
+    }
+    addHistory(id, history) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.nuviotClient.post(`/api/job/application/${id}/history`, history);
         });
     }
 }

@@ -91,6 +91,21 @@ class BusinessService {
     getCustomers() {
         return this.nuviotClient.getListResponse('/api/customers');
     }
+    getPayrollForYear(year) {
+        return this.nuviotClient.request(`/api/payroll/year/${year}`);
+    }
+    generatePayroll(timePeriodId) {
+        return this.nuviotClient.request(`/api/payroll/generate/${timePeriodId}`);
+    }
+    getPaymentsForPeriod(timePeriodId) {
+        return this.nuviotClient.request(`/api/payroll/payments/${timePeriodId}`);
+    }
+    updatePayment(update) {
+        return this.nuviotClient.updateWithResponse(`/api/payment/update`, update);
+    }
+    generatePaymentsForPeriod(timePeriodId) {
+        return this.nuviotClient.requestForInvokeResultEx(`/api/payroll/generate/${timePeriodId}`);
+    }
     saveCustomer(customer) {
         if (customer.id) {
             return this.nuviotClient.updateWithResponse('/api/customer', customer);
